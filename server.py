@@ -1,7 +1,6 @@
 import socket
 import pickle
 import time
-import argparse
 
 
 class ServerResponse:
