@@ -1,4 +1,7 @@
 import socket
+import pickle
+import time
+import argparse
 
 
 class ServerResponse:
@@ -15,14 +18,39 @@ class ClientResponse:
 
 
 class CustomServer:
-    def __init__(self, id):
+    def __init__(self, identity, port, balancer_port):
         self.queue = []
-        self.id = id
+        self.identity = identity
+        self.port = port
+        self.socket_balancer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket_clients = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.balancer_port = balancer_port
+        self.socket_clients.listen(1)
 
     def client_response(self):
-        print("temp")
+        while True:
+            while len(self.queue) > 0:
+                first = self.queue.pop(0)
+                identity = first[1]
+                self.socket_clients.connect(('localhost', first[0]))
+                response = ClientResponse(identity)
+                response = pickle.dumps(response)
+                self.socket_clients.sendall(response)
+                self.socket_clients.close()
 
-    def balancer_response(self):
-        print("temp")
+    def receive_request(self):
+        while True:
+            client_socket, client_address = self.socket_clients.accept()
+            request = client_socket.recv(self.port)
+            request = pickle.loads(request)
+            self.queue.append([request.port, request.identity])
 
-    
+    def balancer_response(self, wait_time):
+        while True:
+            self.socket_balancer.connect(('localhost', self.balancer_port))
+            response = ServerResponse(self.identity, len(self.queue))
+            response = pickle.dumps(response)
+            self.socket_balancer.sendall(response)
+            self.socket_balancer.close()
+            time.sleep(wait_time)
+
