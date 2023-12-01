@@ -1,5 +1,6 @@
 import socket
 import pickle
+import threading
 
 
 class ClientRequest:
@@ -32,3 +33,15 @@ class CustomClient:
             self.socket_send.connect(('localhost', self.balancer_port))
             self.socket_send.sendall(request)
             self.socket_send.close()
+
+
+def main():
+    client = CustomClient
+    send_thread = threading.Thread(target=client.send_request)
+    receive_thread = threading.Thread(target=client.receive_response)
+    send_thread.start()
+    receive_thread.start()
+
+
+if __name__ == '__main__':
+    main()

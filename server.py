@@ -1,6 +1,7 @@
 import socket
 import pickle
 import time
+import threading
 
 
 class ServerResponse:
@@ -17,10 +18,11 @@ class ClientResponse:
 
 
 class CustomServer:
-    def __init__(self, identity, port, balancer_port):
+    def __init__(self, identity, port, balancer_port, wait_time):
         self.queue = []
         self.identity = identity
         self.port = port
+        self.wait_time = wait_time
         self.socket_balancer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket_clients = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.balancer_port = balancer_port
@@ -53,3 +55,14 @@ class CustomServer:
             self.socket_balancer.close()
             time.sleep(wait_time)
 
+
+def main():
+    server = CustomServer()
+    update_balancer_thread = threading.Thread(target=server.balancer_response,
+                                              args=(server.wait_time,))
+    receive_thread = threading.Thread(target=server.receive_request)
+    response_thread = threading.Thread(target=server.client_response)
+
+
+if __name__ == '__main__':
+    main()
