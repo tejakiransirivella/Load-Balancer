@@ -46,22 +46,24 @@ class CustomServer:
             request = pickle.loads(request)
             self.queue.append([request.port, request.identity])
 
-    def balancer_response(self, wait_time):
+    def balancer_response(self):
         while True:
             self.socket_balancer.connect(('localhost', self.balancer_port))
             response = ServerResponse(self.identity, len(self.queue))
             response = pickle.dumps(response)
             self.socket_balancer.sendall(response)
             self.socket_balancer.close()
-            time.sleep(wait_time)
+            time.sleep(self.wait_time)
 
 
 def main():
-    server = CustomServer()
-    update_balancer_thread = threading.Thread(target=server.balancer_response,
-                                              args=(server.wait_time,))
+    server = CustomServer
+    update_balancer_thread = threading.Thread(target=server.balancer_response)
     receive_thread = threading.Thread(target=server.receive_request)
     response_thread = threading.Thread(target=server.client_response)
+    update_balancer_thread.start()
+    receive_thread.start()
+    response_thread.start()
 
 
 if __name__ == '__main__':
