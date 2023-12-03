@@ -153,6 +153,7 @@ def main():
     """
      Initializes 4 threads for client,controller,server and starts them.
     """
+    print("LB started")
     if len(sys.argv) == 1:
         raise Exception("Expecting port argument")
 
