@@ -9,6 +9,9 @@ import sys
 import time
 from threading import *
 from typing import List
+from model.ServerResponse import ServerResponse
+from model.ClientRequest import ClientRequest
+from model.ControllerRequest import ControllerRequest
 
 
 class ServerUtil:
@@ -24,20 +27,6 @@ class ServerUtil:
 
     def __str__(self):
         return "server identity = {},  Queue length = {}".format(self.identity, self.queue_length)
-
-
-class ControllerRequest:
-    """
-    It is the request to the controller to up or down servers
-    """
-    __slots__ = "type", "identity"
-
-    def __init__(self, type, identity):
-        self.type = type
-        self.identity = identity
-
-    def __str__(self):
-        return "type = {}, server identity = {}".format(self.type, self.identity)
 
 
 class LoadBalancer:
@@ -57,15 +46,15 @@ class LoadBalancer:
         """
          accepts the connection from the server and adds the server to the list.
         """
+        lb_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        lb_socket.bind(('localhost', self.server_port))
+        lb_socket.listen(10)
         while True:
-            lb_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            lb_socket.bind(('localhost', self.server_port))
-            lb_socket.listen(10)
             server_socket, server_address = lb_socket.accept()
             server_response = self.parse_response(server_socket)
             server_util = ServerUtil(server_socket, server_response.identity, server_response.queue_length)
-            print("============Received connection from Server=====================")
-            print("============="+str(server_util)+"=============")
+            print("LoadBalancer | ============Received connection from Server=====================")
+            print("LoadBalancer | =============" + str(server_util) + "=============")
             self.servers.append(server_util)
 
     def parse_response(self, socket):
@@ -86,8 +75,8 @@ class LoadBalancer:
             for server in self.servers:
                 server_response = self.parse_response(server.server_socket)
                 server.queue_length = server_response.queue_length
-                print("=================Updated Queue Length==============")
-                print(str(server))
+                print("LoadBalancer |=================Updated Queue Length==============")
+                print("LoadBalancer | " + str(server))
 
     def apply_shortest_queue(self):
         """
@@ -107,25 +96,27 @@ class LoadBalancer:
         """
          gets client request, finds the server to redirect to and sends the packet to appropriate server
         """
+        lb_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        lb_socket.bind(('localhost', self.client_port))
+        lb_socket.listen(10)
         while True:
-            lb_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            lb_socket.bind(('localhost', self.client_port))
-            lb_socket.listen(10)
-            client_socket, client_address = lb_socket.accept()
-            client_response = self.parse_response(client_socket)
-            client_request = pickle.dumps(client_response)
-            server = self.apply_shortest_queue()
-            server.server_socket.sendall(client_request)
-            server.queue_length += 1
-            print("========= redirection ==================")
-            print("Client Id - {} sent to Server id - {} Queue length - {}".
-                  format(client_response.identity, server.identity, server.queue_length))
-            lb_socket.close()
+            if len(self.servers) > 0:
+                client_socket, client_address = lb_socket.accept()
+                client_response = self.parse_response(client_socket)
+                client_socket.close()
+                client_request = pickle.dumps(client_response)
+                server = self.apply_shortest_queue()
+                server.server_socket.sendall(client_request)
+                server.queue_length += 1
+                print("LoadBalancer |========= redirection ==================")
+                print("LoadBalancer | Client Id - {} sent to Server id - {} Queue length - {}".
+                      format(client_response.identity, server.identity, server.queue_length))
 
     def send_controller_request(self):
         """
         Sends request to controller to increase or decrease the servers based on traffic
         """
+        time.sleep(10)
         lb_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         lb_socket.connect(("localhost", self.controller_port))
 
@@ -135,18 +126,19 @@ class LoadBalancer:
                     controller_request = ControllerRequest(0, None)
                     controller_request = pickle.dumps(controller_request)
                     lb_socket.sendall(controller_request)
-                    print("=========Request to increase the server===========")
-                    print(str(controller_request))
+                    print("LoadBalancer | =========Request to increase the server===========")
+                    print("LoadBalancer | {}".format(str(controller_request)))
                     break
                 if server.queue_length == 0:
                     controller_request = ControllerRequest(1, server.identity)
                     controller_request = pickle.dumps(controller_request)
                     lb_socket.sendall(controller_request)
                     self.servers.remove(server)
-                    print("=========Request to remove the server===========")
-                    print("Removed Server Id - {}".format(server.identity))
+                    # server.server_socket.close()
+                    print("LoadBalancer | =========Request to remove the server===========")
+                    print("LoadBalancer | Removed Server Id - {}".format(server.identity))
                     break
-            time.sleep(5)
+            time.sleep(2)
 
 
 def main():
@@ -174,4 +166,5 @@ def main():
     send_controller_request_thread.start()
 
 
-main()
+if __name__ == "__main__":
+    main()

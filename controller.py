@@ -6,6 +6,7 @@ import subprocess
 import signal
 import socket
 import threading
+from model.ControllerRequest import ControllerRequest
 
 
 def shutdown_components(cleanup_signal, processes: []):
@@ -49,7 +50,11 @@ def handle_lb_requests(port: int, server_processes: [], server_id_pid: {}, confi
             server_id_pid[server_id] = process.pid
             server_processes[process.pid] = process
         else:
-            server_processes[server_id_pid[deserialize_req.server_id]].terminate()
+            print("======processes dictionary - {} ===============".format(server_id_pid))
+            print("======server process dictionary - {} ===============".format(server_processes))
+            server_processes[server_id_pid[deserialize_req.identity]].terminate()
+            server_processes[server_id_pid[deserialize_req.identity]].join()
+            print("is Alive : " + str(server_processes[server_id_pid[deserialize_req.identity]].is_alive()))
 
 
 def add_server(configurations):
@@ -118,7 +123,7 @@ def main():
     signal.signal(signal.SIGINT, shutdown_components)
 
 
-    handle_lb_requests(configurations["controller"]["port"], server_processes, server_id_pid, configurations)
+    # handle_lb_requests(configurations["controller"]["port"], server_processes, server_id_pid, configurations)
 
 
 if __name__ == '__main__':

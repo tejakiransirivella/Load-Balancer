@@ -2,13 +2,10 @@ import socket
 import pickle
 import sys
 import threading
+import time
 
-
-class ClientRequest:
-    def __init__(self, identity, port_in_use):
-        self.identity = identity
-        self.port = port_in_use
-        # Can add more if we have time
+from model.ClientRequest import ClientRequest
+from model.ClientResponse import ClientResponse
 
 
 class CustomClient:
@@ -21,23 +18,23 @@ class CustomClient:
         # self.socket_receive.listen(1)
 
     def receive_response(self):
+        self.socket_receive.bind(('localhost', self.port))
+        self.socket_receive.listen(10)
         while True:
-            self.socket_receive.bind(('localhost', self.port))
-            self.socket_receive.listen()
             server_socket, server_address = self.socket_receive.accept()
-            response = server_socket.recv()
+            response = server_socket.recv(2048)
             response = pickle.loads(response)
             if response.identity == self.identity:
-                print("Correct response received")
+                print("Server | Correct response received")
 
     def send_request(self):
+        time.sleep(2)
+        self.socket_send.connect(('localhost', self.balancer_port))
         while True:
             request = ClientRequest(self.identity, self.port)
             request = pickle.dumps(request)
-            self.socket_send.connect(('localhost', self.balancer_port))
             self.socket_send.sendall(request)
-            self.socket_send.close()
-
+            print("Client  | Client Id - {} sent request to Load Balancer".format(self.identity))
 
 def main():
 
