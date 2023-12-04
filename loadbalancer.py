@@ -6,6 +6,7 @@
 import pickle
 import socket
 import sys
+import threading
 import time
 from threading import *
 from typing import List
@@ -33,14 +34,15 @@ class LoadBalancer:
     """
     It is a load balancer data class to store all ports and list of servers
     """
-    __slots__ = "server_port", "client_port", "controller_port", "max_queue_length", "servers"
+    __slots__ = "server_port", "client_port", "controller_port", "max_queue_length", "lock", "servers"
 
-    def __init__(self, client_port, server_port, controller_port, max_queue_length):
+    def __init__(self, client_port, server_port, controller_port, max_queue_length, lock):
         self.server_port = server_port
         self.client_port = client_port
         self.controller_port = controller_port
         self.max_queue_length = max_queue_length
         self.servers: List[ServerUtil] = []
+        self.lock = lock
 
     def accept_server_connection(self):
         """
@@ -105,8 +107,10 @@ class LoadBalancer:
                 client_response = self.parse_response(client_socket)
                 client_socket.close()
                 client_request = pickle.dumps(client_response)
+                self.lock.acquire()
                 server = self.apply_shortest_queue()
                 server.server_socket.sendall(client_request)
+                self.lock.release()
                 server.queue_length += 1
                 print("LoadBalancer |========= redirection ==================")
                 print("LoadBalancer | Client Id - {} sent to Server id - {} Queue length - {}".
@@ -132,8 +136,10 @@ class LoadBalancer:
                 if server.queue_length == 0:
                     controller_request = ControllerRequest(1, server.identity)
                     controller_request = pickle.dumps(controller_request)
+                    self.lock.acquire()
                     lb_socket.sendall(controller_request)
                     self.servers.remove(server)
+                    self.lock.release()
                     # server.server_socket.close()
                     print("LoadBalancer | =========Request to remove the server===========")
                     print("LoadBalancer | Removed Server Id - {}".format(server.identity))
@@ -154,7 +160,7 @@ def main():
     controller_port = int(sys.argv[3])
     max_queue_length = int(sys.argv[4])
 
-    load_balancer = LoadBalancer(client_port, server_port, controller_port, max_queue_length)
+    load_balancer = LoadBalancer(client_port, server_port, controller_port, max_queue_length, threading.Lock())
     accept_server_conn_thread = Thread(target=load_balancer.accept_server_connection)
     receive_server_data_thread = Thread(target=load_balancer.receive_server_response)
     send_client_request_thread = Thread(target=load_balancer.send_client_request)

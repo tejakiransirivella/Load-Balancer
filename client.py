@@ -25,19 +25,22 @@ class CustomClient:
             response = server_socket.recv(2048)
             response = pickle.loads(response)
             if response.identity == self.identity:
-                print("Server | Correct response received")
+                print("Client | Correct response received")
 
     def send_request(self):
         time.sleep(2)
-        self.socket_send.connect(('localhost', self.balancer_port))
         while True:
+            self.socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket_send.connect(('localhost', self.balancer_port))
             request = ClientRequest(self.identity, self.port)
             request = pickle.dumps(request)
             self.socket_send.sendall(request)
             print("Client  | Client Id - {} sent request to Load Balancer".format(self.identity))
+            self.socket_send.close()
+            time.sleep(5)
+
 
 def main():
-
     if len(sys.argv) != 4:
         print("Insufficient arguments")
         print("Usage: client.py <id> <port> <load-balancer port>")

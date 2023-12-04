@@ -21,6 +21,7 @@ class CustomServer:
     def client_response(self):
         while True:
             while len(self.queue) > 0:
+                self.socket_clients = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 first = self.queue.pop(0)
                 identity = first[1]
                 self.socket_clients.connect(('localhost', first[0]))
