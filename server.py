@@ -69,9 +69,9 @@ def main():
         return
 
     server = CustomServer(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
-    update_balancer_thread = threading.Thread(target=server.balancer_response)
-    receive_thread = threading.Thread(target=server.receive_request)
-    response_thread = threading.Thread(target=server.client_response)
+    update_balancer_thread = threading.Thread(target=server.balancer_response, name=f"SERVER_{sys.argv[1]}-update_balancer")
+    receive_thread = threading.Thread(target=server.receive_request, name=f"SERVER_{sys.argv[1]}-receive_cl_req")
+    response_thread = threading.Thread(target=server.client_response, name=f"SERVER_{sys.argv[1]}-respond_cl")
     update_balancer_thread.start()
     receive_thread.start()
     response_thread.start()

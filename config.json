@@ -1,23 +1,23 @@
 {
   "server": {
     "count": "4",
-    "port_range_start": "2000",
-    "port_range_end": "3000",
+    "port_range_start": "50000",
+    "port_range_end": "51000",
     "start_id": "0",
     "queue_update_interval": "10"
   },
   "client": {
     "count": "1",
-    "port_range_start": "4000",
-    "port_range_end": "5000",
+    "port_range_start": "52000",
+    "port_range_end": "53000",
     "start_id": "1000"
   },
   "load_balancer": {
-    "server_side_port": "6054",
-    "client_side_port": "6055",
+    "server_side_port": "54000",
+    "client_side_port": "54001",
     "max_queue_size": "10"
   },
   "controller": {
-    "port": "6056"
+    "port": "55000"
   }
 }

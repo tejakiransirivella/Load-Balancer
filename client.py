@@ -13,7 +13,8 @@ class CustomClient:
         self.port = port
         self.identity = identity
         self.balancer_port = balancer_port
-        self.socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self.socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket_send = None
         self.socket_receive = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.socket_receive.listen(1)
 
