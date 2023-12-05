@@ -43,17 +43,22 @@ def handle_lb_requests(port: int, server_processes: [], server_id_pid: {}, confi
         with open('logs\\controller\\lb_handler.txt', 'w') as f:
             server_socket.bind(('localhost', int(port)))
             server_socket.listen()
+            lb_socket, lb_address = server_socket.accept()
             print("Controller: listening to the LB", file=f, flush=True)
             ind = 500
             while True:
-                lb_socket, lb_address = server_socket.accept()
+                # lb_socket, lb_address = server_socket.accept()
                 lb_request = lb_socket.recv(65535)
                 deserialize_req = pickle.loads(lb_request)
+
+                print(f"Controller: Request from LB {deserialize_req}", file=f, flush=True)
 
                 if deserialize_req.type == 0:
                     server_id, process = add_server(configurations,
                                                     int(configurations["server"]["port_range_start"]) + ind)
                     # process.start()
+                    print(f'Controller: Added new server id - {server_id}', file=f,
+                          flush=True)
                     server_id_pid[server_id] = process.pid
                     server_processes[process.pid] = process
                     ind += 1
