@@ -45,14 +45,14 @@ class LoadBalancer:
         self.lock = lock
 
     def __str__(self):
-        output = "==============================\n"
+        output = f"==================================\n"
         output += "        Server count  {}\n".format(len(self.servers))
-        output += "==============================\n"
-        output += "{:15s} {:15s}\n".format("Server Id", "Request Count")
-        output += "==============================\n"
+        output += "----------------------------------\n"
+        output += "{:15s} | {:15s}\n".format("Server Id", "Request Count")
+        output += "----------------------------------\n"
         for server in self.servers:
-            output += "{:10d} {:10d}\n".format(server.identity, server.queue_length)
-        output += "==============================\n"
+            output += "{:15d} | {:15d}\n".format(server.identity, server.queue_length)
+        output += "==================================\n"
         return output
 
     def accept_server_connection(self):
@@ -66,8 +66,6 @@ class LoadBalancer:
             server_socket, server_address = lb_socket.accept()
             server_response = self.parse_response(server_socket)
             server_util = ServerUtil(server_socket, server_response.identity, server_response.queue_length)
-            # print("LoadBalancer | ============Received connection from Server=====================")
-            # print("LoadBalancer | =============" + str(server_util) + "=============")
             self.servers.append(server_util)
 
     def parse_response(self, socket):
@@ -95,8 +93,6 @@ class LoadBalancer:
                 server_response = self.parse_response(server.server_socket)
                 if server_response is not None:
                     server.queue_length = server_response.queue_length
-                    # print("LoadBalancer |=================Updated Queue Length==============")
-                    # print("LoadBalancer | " + str(server))
 
     def apply_shortest_queue(self):
         """
@@ -131,10 +127,6 @@ class LoadBalancer:
                     server.server_socket.sendall(client_request)
                     self.lock.release()
                     server.queue_length += 1
-                    # print("LoadBalancer |========= redirection ==================")
-                    # print("LoadBalancer | Client Id - {} sent to Server id - {} Queue length - {}".
-                    #       format(client_response.identity, server.identity, server.queue_length))
-        # except ConnectionResetError:
         except Exception as e:
             print("LOADBALANCER: Connection was closed")
 
@@ -153,19 +145,12 @@ class LoadBalancer:
                     controller_request = ControllerRequest(0, None)
                     serialized_controller_request = pickle.dumps(controller_request)
                     lb_socket.sendall(serialized_controller_request)
-                    # print("LoadBalancer | =========Request to increase the server===========")
-                    # print("LoadBalancer | {}".format(str(controller_request)))
                     break
                 if server.queue_length == 0 and len(self.servers) > 1:
                     controller_request = ControllerRequest(1, server.identity)
                     controller_request = pickle.dumps(controller_request)
-                    # self.lock.acquire()
                     lb_socket.sendall(controller_request)
                     self.servers.remove(server)
-                    # self.lock.release()
-                    # server.server_socket.close()
-                    # print("LoadBalancer | =========Request to remove the server===========")
-                    # print("LoadBalancer | Removed Server Id - {}".format(server.identity))
                     break
 
             time.sleep(5)

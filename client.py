@@ -6,7 +6,6 @@ import threading
 import time
 
 from model.ClientRequest import ClientRequest
-from model.ClientResponse import ClientResponse
 
 
 class CustomClient:
@@ -14,12 +13,10 @@ class CustomClient:
         self.port = port
         self.identity = identity
         self.balancer_port = balancer_port
-        # self.socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket_send = None
         self.socket_receive = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.file = open(f'logs\\clients\\client_{identity}.txt', 'w')
         self.request_count = 0
-        # self.socket_receive.listen(1)
 
     def receive_response(self):
         self.socket_receive.bind(('localhost', self.port))
@@ -29,9 +26,7 @@ class CustomClient:
             response = server_socket.recv(2048)
             response = pickle.loads(response)
             if response.identity == self.identity:
-                # lock.acquire()
                 print("Response received", file=self.file, flush=True)
-                # lock.release()
 
     def send_request(self):
         time.sleep(2)
@@ -43,7 +38,6 @@ class CustomClient:
                 request = pickle.dumps(request)
                 self.socket_send.sendall(request)
 
-                # lock.acquire()
                 self.request_count += 1
                 print(f"Sent request {self.request_count} to the server", file=self.file, flush=True)
                 # lock.release()

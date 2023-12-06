@@ -1,13 +1,10 @@
 import json
-import multiprocessing
 import pickle
 import random
 import subprocess
 import signal
 import socket
 import threading
-import sys
-from model.ControllerRequest import ControllerRequest
 
 
 def shutdown_components(cleanup_signal, processes: []):
@@ -47,7 +44,6 @@ def handle_lb_requests(port: int, server_processes: [], server_id_pid: {}, confi
             print("Controller: listening to the LB", file=f, flush=True)
             ind = 500
             while True:
-                # lb_socket, lb_address = server_socket.accept()
                 lb_request = lb_socket.recv(65535)
                 deserialize_req = pickle.loads(lb_request)
 
@@ -56,15 +52,12 @@ def handle_lb_requests(port: int, server_processes: [], server_id_pid: {}, confi
                 if deserialize_req.type == 0:
                     server_id, process = add_server(configurations,
                                                     int(configurations["server"]["port_range_start"]) + ind)
-                    # process.start()
                     print(f'Controller: Added new server id - {server_id}', file=f,
                           flush=True)
                     server_id_pid[server_id] = process.pid
                     server_processes[process.pid] = process
                     ind += 1
                 else:
-                    # print("======processes dictionary - {} ===============".format(server_id_pid))
-                    # print("======server process dictionary - {} ===============".format(server_processes))
                     server_id_received = deserialize_req.identity
                     print(f'Controller: Received deletion request for server id - {server_id_received}', file=f,
                           flush=True)
@@ -113,7 +106,7 @@ def main():
     run_components(["loadbalancer.py", configurations["load_balancer"]["client_side_port"],
                     configurations["load_balancer"]["server_side_port"],
                     configurations["controller"]["port"],
-                    configurations["load_balancer"]["max_queue_size"]])
+                    configurations["load_balancer"]["server_scaling_threshold"]])
 
     # running servers
     for i in range(int(configurations["server"]["count"])):

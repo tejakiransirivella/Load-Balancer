@@ -17,7 +17,6 @@ class CustomServer:
         self.socket_clients = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.balancer_port = balancer_port
         self.file = open(f'logs\\servers\\server_{identity}.txt', 'w')
-        # self.socket_clients.listen()  # was 1
 
     def client_response(self):
         while True:
@@ -29,41 +28,28 @@ class CustomServer:
                 response = ClientResponse(identity)
                 response = pickle.dumps(response)
                 self.socket_clients.sendall(response)
-                # print("Server | ===============Sent Response to Client==================")
                 print(f"Sending response to Client Id - {identity}", file=self.file, flush=True)
                 self.socket_clients.close()
 
     def receive_request(self):
-        # client_socket, client_address = self.socket_clients.accept()
         time.sleep(5)
-        # print("server port - {}", self.port)
-        # self.socket_balancer.bind(('localhost', self.port))
-        # self.socket_balancer.listen(10)
-        # print("==========waiting for request from load balancer")
-       # load_balancer_socket, address = self.socket_balancer.accept()
         while True:
-            # client_socket, client_address = self.socket_clients.accept()
             try:
                 request = self.socket_balancer.recv(2048)
                 request = pickle.loads(request)
                 print(f"Received request from Client id - {request.identity}", file=self.file, flush=True)
-                # print(str(request))
                 self.queue.append([request.port, request.identity])
                 print(f"Queue size - {len(self.queue)}", file=self.file, flush=True)
-                # except pickle.UnpicklingError:
             except Exception as e:
                 print()
 
     def balancer_response(self):
         self.socket_balancer.connect(('localhost', self.balancer_port))
         while True:
-            # self.socket_balancer.connect(('localhost', self.balancer_port))
             response = ServerResponse(self.identity, len(self.queue))
-            # print("Server | =============Sending Updates to  Load Balancer==============")
             print(f"Status update {str(response)} sent to the Load Balancer", file=self.file, flush=True)
             response = pickle.dumps(response)
             self.socket_balancer.sendall(response)
-            # self.socket_balancer.close()
             time.sleep(self.wait_time)
 
 
