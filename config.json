@@ -1,0 +1,23 @@
+{
+  "server": {
+    "count": "1",
+    "port_range_start": "50000",
+    "port_range_end": "51000",
+    "start_id": "0",
+    "queue_update_interval": "10"
+  },
+  "client": {
+    "count": "10",
+    "port_range_start": "51000",
+    "port_range_end": "52000",
+    "start_id": "1000"
+  },
+  "load_balancer": {
+    "server_side_port": "54000",
+    "client_side_port": "54001",
+    "server_scaling_threshold": "5"
+  },
+  "controller": {
+    "port": "55000"
+  }
+}
