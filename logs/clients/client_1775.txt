@@ -1,0 +1,4 @@
+Sent request 1 to the server
+Response received
+Sent request 2 to the server
+Response received

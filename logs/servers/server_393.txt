@@ -1,0 +1,7 @@
+Status update Server id - 393, Queue length - 0 sent to the Load Balancer
+Received request from Client id - 1775
+Queue size - 1
+Sending response to Client Id - 1775
+Received request from Client id - 1775
+Queue size - 1
+Sending response to Client Id - 1775
