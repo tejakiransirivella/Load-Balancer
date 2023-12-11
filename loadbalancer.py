@@ -10,9 +10,14 @@ import threading
 import time
 from threading import *
 from typing import List
+from datetime import datetime
 from model.ServerResponse import ServerResponse
 from model.ClientRequest import ClientRequest
 from model.ControllerRequest import ControllerRequest
+
+import matplotlib
+from matplotlib import pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 
 class ServerUtil:
@@ -130,7 +135,6 @@ class LoadBalancer:
         except Exception as e:
             print("LOADBALANCER: Connection was closed")
 
-
     def send_controller_request(self):
         """
         Sends request to controller to increase or decrease the servers based on traffic
@@ -155,6 +159,44 @@ class LoadBalancer:
 
             time.sleep(5)
 
+    def display_info(self):
+        """
+        displays the server id's and their job count
+        """
+        while True:
+            time.sleep(1)
+            print(self)
+
+
+def animate(frame, time_data, servers_data, load_balancer, ax):
+    """
+        plots the graph based on time and number of servers
+    """
+    time_data.append(datetime.now())
+    servers_data.append(len(load_balancer.servers))
+    ax.clear()
+    ax.set_xlabel('Time')
+    ax.set_ylabel("Servers count")
+    ax.set_title("Servers count over time")
+    line = ax.plot(time_data, servers_data)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+    return line
+
+
+def create_real_time_plot(load_balancer):
+    """
+        initializes the plot and calls funcanimation that calls animate function every 1 second
+    """
+    matplotlib.use('TkAgg')
+    time_data = []
+    servers_data = []
+    fig, ax = plt.subplots()
+
+    ani = FuncAnimation(fig, animate, interval=1000, cache_frame_data=False,
+                        fargs=(time_data, servers_data, load_balancer, ax))
+    plt.show()
+
+
 def main():
     """
      Initializes 4 threads for client,controller,server and starts them.
@@ -168,20 +210,21 @@ def main():
     controller_port = int(sys.argv[3])
     max_queue_length = int(sys.argv[4])
 
-    load_balancer = LoadBalancer(client_side_port, server_side_port, controller_port, max_queue_length, threading.Lock())
+    load_balancer = LoadBalancer(client_side_port, server_side_port, controller_port, max_queue_length,
+                                 threading.Lock())
     accept_server_conn_thread = Thread(target=load_balancer.accept_server_connection)
     receive_server_data_thread = Thread(target=load_balancer.receive_server_response)
     send_client_request_thread = Thread(target=load_balancer.send_client_request)
     send_controller_request_thread = Thread(target=load_balancer.send_controller_request)
+    display_info_thread = Thread(target=load_balancer.display_info)
 
     accept_server_conn_thread.start()
     receive_server_data_thread.start()
     send_client_request_thread.start()
     send_controller_request_thread.start()
+    display_info_thread.start()
 
-    while True:
-        time.sleep(1)
-        print(load_balancer)
+    create_real_time_plot(load_balancer)
 
 
 if __name__ == "__main__":
