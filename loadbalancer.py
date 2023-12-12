@@ -178,6 +178,7 @@ def animate(frame, time_data, servers_data, load_balancer, ax):
     ax.set_xlabel('Time')
     ax.set_ylabel("Servers count")
     ax.set_title("Servers count over time")
+    plt.yticks(range(1, max(servers_data) + 1))
     line = ax.plot(time_data, servers_data)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
     return line
