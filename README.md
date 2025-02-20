@@ -1,4 +1,4 @@
-# Networks-Project
+# Load Balancer
 
 This project repository contains the files necessary for implementing a load balancer from scratch using the shortest queue strategy.
 
